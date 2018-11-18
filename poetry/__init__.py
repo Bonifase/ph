@@ -43,24 +43,7 @@ def create_app(test_config=None):
     def works(name):
         request = requests.get('http://poetrydb.org/author/{}'.format(name))
         works = json.loads(request.text)
-        response = pn_client.publish(
-            interests=['hello'],
-            publish_body={
-                'apns': {
-                    'aps': {
-                        'alert': 'Hello!',
-                    },
-                },
-                'fcm': {
-                    'notification': {
-                        'title': 'Hello',
-                        'body': 'Hello, world!',
-                    },
-                },
-            },
-        )
 
-        print(response['publishId'])
         return render_template('authors_work.html', works=works)
 
     return app
