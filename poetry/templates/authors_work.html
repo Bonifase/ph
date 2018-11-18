@@ -1,12 +1,15 @@
-<html>
-<body>
-  <h1>Author's Work</h1>
+{% extends "layout.html" %}
+{% block content %}
+  <h1>{{author}}'s Work</h1>
   {% for work in works %}
-    <div><h3>{{work.title}}</h3></div>
-    <div><h4>{{work.author}}</h4></div>
+    <h3>{{work.title}}</h3>
     <div><small>
-        {% for line in work.lines %}{{line}}{% endfor %}
+        <ul style="list-style: none;">
+        {% for line in work.lines %}
+            <li>{{line}}</li>
+        {% endfor %}
+        </ul> 
     </small></div>
+    <small>By {{work.author}}</small>
   {% endfor %}
-</body>
-</html>
+  {% endblock content %}

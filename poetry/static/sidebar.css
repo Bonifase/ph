@@ -23,8 +23,7 @@
 }
 
 .main {
-	margin-left: 140px; /* Same width as the sidebar + left position in px */
-	font-size: 28px; /* Increased text to enable scrolling */
+	margin-left: 140px;
 	padding: 0px 10px;
 }
 
@@ -35,4 +34,7 @@
 	.sidenav a {
 		font-size: 18px;
 	}
+}
+ul {
+	list-style-type: none;
 }

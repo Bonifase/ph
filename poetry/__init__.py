@@ -1,66 +1,74 @@
 import os
+import logging
 import json
 import requests
-from flask import Flask, render_template
-from pusher_push_notifications import PushNotifications
 
-pn_client = PushNotifications(
-    instance_id=os.getenv('INSTANCE_ID'),
-    secret_key=os.getenv('SECRET_KEY'),
-)
+from flask import Flask, request, Response, render_template
+from flask import jsonify
+
+from flask_sqlalchemy import SQLAlchemy
 
 
-def create_app(test_config=None):
-    # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
-    )
+from .push import send_web_push
 
-    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # load the test config if passed in
-        app.config.from_mapping(test_config)
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+db = SQLAlchemy(app)
 
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+logger = logging.getLogger(__name__)
 
-    # a simple page that says hello
 
-    @app.route('/', methods=['GET'])
-    def hello():
-        request = requests.get('http://poetrydb.org/author')
-        authors = json.loads(request.text)['authors']
-        return render_template('authors.html', authors=authors)
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subscription_token = db.Column(db.String(400), unique=True)
 
-    @app.route('/author/<name>', methods=['GET'])
-    def works(name):
-        request = requests.get('http://poetrydb.org/author/{}'.format(name))
-        works = json.loads(request.text)
-        response = pn_client.publish(
-            interests=['hello'],
-            publish_body={
-                'apns': {
-                    'aps': {
-                        'alert': 'Hello!',
-                    },
-                },
-                'fcm': {
-                    'notification': {
-                        'title': 'Hello',
-                        'body': 'Hello, world!',
-                    },
-                },
-            },
-        )
+    def __init__(self, subscription_token):
+        self.subscription_token = subscription_token
 
-        print(response['publishId'])
-        return render_template('authors_work.html', works=works)
+    def __repr__(self):
+        return "<User %r>" % self.id
 
-    return app
+
+@app.route('/', methods=['GET'])
+def home():
+    request = requests.get('http://poetrydb.org/author')
+    authors = json.loads(request.text)['authors']
+    return render_template('authors.html', authors=authors)
+
+
+@app.route('/author/<name>', methods=['GET'])
+def works(name):
+    request = requests.get('http://poetrydb.org/author/{}'.format(name))
+    works = json.loads(request.text)
+    return render_template('authors_work.html', works=works, author=name)
+
+
+@app.route("/subscription/", methods=["GET", "POST"])
+def subscription():
+    """
+        POST creates a subscription
+        GET returns vapid public key which clients uses to send around push notification
+    """
+
+    if request.method == "GET":
+        return Response(response=json.dumps({"public_key": os.getenv("VAPID_PUBLIC_KEY")}),
+                        headers={"Access-Control-Allow-Origin": "*"}, content_type="application/json")
+
+    subscription_token = request.get_json("subscription_token")
+    return Response(status=201, mimetype="application/json")
+
+
+@app.route("/push/", methods=["POST"])
+def push_to_all_users():
+    message = request.get_json("message") if request.data else "Updates available"
+
+    for user in User.query.all():
+        try:
+            send_web_push(json.loads(user.subscription_token), message)
+        except Exception as e:
+            logger.error(e)
+
+    return Response(status=200, mimetype="application/json")
+
+    if __name__ == "__main__":
+        app.run(debug=True)
