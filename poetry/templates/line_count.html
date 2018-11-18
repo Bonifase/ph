@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h1>{{author}}'s Work</h1>
+  {% for poem in poems %}
+    <h3>{{poem.title}}</h3>
+    <div><small>
+        <ul style="list-style: none;">
+        {% for line in poem.lines %}
+            <li>{{line}}</li>
+        {% endfor %}
+        </ul> 
+    </small></div>
+    <small>By {{poem.author}}</small>
+  {% endfor %}
+  {% endblock content %}

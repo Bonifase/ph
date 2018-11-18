@@ -43,6 +43,20 @@ def works(name):
     return render_template('authors_work.html', works=works, author=name)
 
 
+@app.route('/linecount/<int:count>', methods=['GET'])
+def poems(count):
+    request = requests.get('http://poetrydb.org/linecount/{}'.format(count))
+    poems = json.loads(request.text)
+    return render_template('line_count.html', poems=poems, count=count)
+
+
+@app.route('/title', methods=['GET'])
+def title(count):
+    request = requests.get('http://poetrydb.org/title')
+    poems = json.loads(request.text)
+    return render_template('line_count.html', poems=poems, count=count)
+
+
 @app.route("/subscription/", methods=["GET", "POST"])
 def subscription():
     """
