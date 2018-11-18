@@ -51,10 +51,10 @@ def poems(count):
 
 
 @app.route('/title', methods=['GET'])
-def title(count):
+def title():
     request = requests.get('http://poetrydb.org/title')
-    poems = json.loads(request.text)
-    return render_template('line_count.html', poems=poems, count=count)
+    titles = json.loads(request.text)["titles"]
+    return render_template('poem_title.html', titles=titles)
 
 
 @app.route("/subscription/", methods=["GET", "POST"])
