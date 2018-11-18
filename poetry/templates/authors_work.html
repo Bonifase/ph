@@ -1,0 +1,12 @@
+<html>
+<body>
+  <h1>Author's Work</h1>
+  {% for work in works %}
+    <div><h3>{{work.title}}</h3></div>
+    <div><h4>{{work.author}}</h4></div>
+    <div><small>
+        {% for line in work.lines %}{{line}}{% endfor %}
+    </small></div>
+  {% endfor %}
+</body>
+</html>
