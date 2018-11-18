@@ -1,3 +1,4 @@
 .env
 __pycache__
 poetry-venv
+.DS_Store
